@@ -1,0 +1,47 @@
+name: Run script on Source Push
+
+on:
+  repository_dispatch:
+    types: [source_push]
+
+jobs:
+  post-scripts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up kube-bench
+        run: |
+          mkdir -p kube-bench-scan/cfg
+          export KUBE_BENCH_VERSION=0.9.1
+          curl -L https://github.com/aquasecurity/kube-bench/releases/download/v${KUBE_BENCH_VERSION}/kube-bench_${KUBE_BENCH_VERSION}_linux_amd64.tar.gz -o kube-bench_${KUBE_BENCH_VERSION}_linux_amd64.tar.gz
+          tar -xvf kube-bench_${KUBE_BENCH_VERSION}_linux_amd64.tar.gz
+          rm -rf kube-bench_${KUBE_BENCH_VERSION}_linux_amd64.tar.gz
+          mv kube-bench kube-bench-scan/
+          mv ./cfg/* kube-bench-scan/cfg
+          
+
+      - name: Kubesec scan of Manifest files
+        run: |
+          cd ./scripts
+          chmod +x kubesec-scan.sh
+          bash kubesec-scan.sh k3s
+          
+      - name: Kube-bench scan (Master node)
+        run: |
+          cd kube-bench-scan
+          chmod +x kube-bench-cis-master.sh
+          bash kube-bench-cis-master.sh
+
+      - name: Kube-bench scan (Worker node)
+        run: |
+          cd kube-bench-scan
+          chmod +x kube-bench-cis-worker.sh
+          bash kube-bench-cis-worker.sh
+
+      - name: Kube-bench scan (Etcd)
+        run: |
+          cd kube-bench-scan
+          chmod +x kube-bench-cis-etcd.sh
+          bash kube-bench-cis-etcd.sh
