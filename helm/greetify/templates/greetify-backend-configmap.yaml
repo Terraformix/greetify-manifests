@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.greetifyBackendConfigMap.name }}
+  namespace: {{ .Values.app.namespace }}
+  labels:
+    app: {{ .Values.app.name }}
+data:
+  DB_PORT: {{ .Values.greetifyDb.service.port | quote }}

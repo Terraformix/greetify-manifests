@@ -1,0 +1,29 @@
+{{- if not .Values.useIstioServiceMesh }} # Don't create NGINX ingress if we use Istio Gateways and Virtual service
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Values.ingress.name }}
+  namespace: {{ .Values.app.namespace }}
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .Values.letsencryptClusterIssuer.clusterIssuerName }}
+spec:
+  ingressClassName: {{ .Values.ingress.ingressClassName }}
+  rules:
+  - host: {{ .Values.app.domain }}
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Values.greetifyFrontend.service.name }}
+            port:
+              number: {{ .Values.greetifyFrontend.service.port }}
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Values.greetifyBackend.service.name }}
+            port:
+              number: {{ .Values.greetifyBackend.service.port }}
+{{- end }}

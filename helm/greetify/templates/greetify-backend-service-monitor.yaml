@@ -1,0 +1,24 @@
+# Custom Kubernetes resources used to discover and scrape metrics from services running in a Kubernetes cluster.
+# ServiceMonitor resource specifies the targets (services or pods) and the configuration for scraping metrics.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: greetify-app-monitor
+  namespace: {{ .Values.app.namespace }}
+  labels:
+    app: greetify
+spec:
+  jobLabel: greetify
+  selector:
+    matchLabels:
+      app: {{ .Values.app.name }}
+      type: {{ .Values.greetifyBackend.labels.type }}
+      monitoring: enabled
+  namespaceSelector:
+    any: true
+    matchNames:
+      - {{ .Values.app.namespace }}
+  endpoints:
+    - port: {{ .Values.greetifyBackend.service.portName }}
+      path: /metrics
+      interval: 5s

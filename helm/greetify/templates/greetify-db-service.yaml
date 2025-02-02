@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.greetifyDb.service.name }}
+  namespace: {{ .Values.app.namespace }}
+  labels:
+    app: {{ .Values.app.name }}
+    type: {{ .Values.greetifyDb.labels.type }}
+spec:
+  ports:
+  - port: {{ .Values.greetifyDb.service.port }}
+    targetPort: {{ .Values.greetifyDb.service.targetPort }}
+    protocol: {{ .Values.greetifyDb.service.protocol }}
+  clusterIP:  None  # Allows direct access to individual Pods in a StatefulSet instead of load-balancing traffic.
+  selector:
+    app: {{ .Values.app.name }}
+    type: {{ .Values.greetifyDb.labels.type }}

@@ -1,0 +1,197 @@
+{{ if .Values.createNetworkPolicies }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: greetify-frontend-policy
+  namespace: {{ .Values.app.namespace }}
+spec:
+  podSelector:
+    matchLabels:
+      app: greetify
+      type: frontend
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: greetify
+              type: backend
+      ports:
+        - protocol: TCP
+          port: 80
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: greetify
+              type: backend
+      ports:
+        - protocol: TCP
+          port: 8080
+    # Allow DNS resolution
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: greetify-backend-policy
+  namespace: {{ .Values.app.namespace }}
+spec:
+  podSelector:
+    matchLabels:
+      app: greetify
+      type: backend
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: greetify
+              type: frontend
+      ports:
+        - protocol: TCP
+          port: 8080
+    - from:
+        - podSelector:
+            matchLabels:
+              app: greetify
+              type: validator
+      ports:
+        - protocol: TCP
+          port: 5194
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: greetify
+              type: frontend
+      ports:
+        - protocol: TCP
+          port: 80
+    - to:
+        - podSelector:
+            matchLabels:
+              app: greetify
+              type: db
+      ports:
+        - protocol: TCP
+          port: 1433
+    # Allow DNS resolution
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: greetify-validator-policy
+  namespace: {{ .Values.app.namespace }}
+spec:
+  podSelector:
+    matchLabels:
+      app: greetify
+      type: validator
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: greetify
+              type: backend
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: greetify
+              type: backend
+      ports:
+        - protocol: TCP
+          port: 5194
+    # Allow DNS resolution
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: greetify-db-policy
+  namespace: {{ .Values.app.namespace }}
+spec:
+  podSelector:
+    matchLabels:
+      app: greetify
+      type: db
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: greetify
+              type: backend
+      ports:
+        - protocol: TCP
+          port: 1433
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: greetify
+              type: backend
+      ports:
+        - protocol: TCP
+          port: 1433
+    # Allow DNS resolution
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+{{- end }}

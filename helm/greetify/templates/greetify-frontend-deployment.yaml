@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.greetifyFrontend.name }}
+  namespace: {{ .Values.app.namespace }}
+  labels:
+    app: {{ .Values.app.name }}
+    type: {{ .Values.greetifyFrontend.labels.type }}
+spec:
+  replicas: {{ .Values.greetifyFrontend.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.app.name }}
+      type: {{ .Values.greetifyFrontend.labels.type }}
+
+  template:
+    metadata:
+      name: {{ .Values.greetifyFrontend.name }}
+      labels:
+        app: {{ .Values.app.name }}
+        type: {{ .Values.greetifyFrontend.labels.type }}
+    spec:
+      serviceAccountName: {{ .Values.greetifyFrontend.serviceAccount.name }}
+      containers:
+        - name: {{ .Values.greetifyFrontend.name }}
+          image: {{ .Values.registry.name }}/{{ .Values.greetifyFrontend.image.name }}:{{ .Values.greetifyFrontend.image.tag }}
+          env:
+            - name: VITE_APP_API_URL
+              value: http://{{ .Values.greetifyBackend.service.name }}:{{ .Values.greetifyBackend.service.port }}
+          ports:
+            - containerPort: {{ .Values.greetifyFrontend.service.port }}

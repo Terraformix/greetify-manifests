@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.greetifyValidator.name }}
+  namespace: {{ .Values.app.namespace }}
+  labels:
+    app: {{ .Values.app.name }}
+    type: {{ .Values.greetifyValidator.labels.type }}
+spec:
+  replicas: {{ .Values.greetifyValidator.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.app.name }}
+      type: {{ .Values.greetifyValidator.labels.type }}
+  template:
+    metadata:
+      name: {{ .Values.greetifyValidator.name }}
+      labels:
+        app: {{ .Values.app.name }}
+        type: {{ .Values.greetifyValidator.labels.type }}
+    spec:
+      serviceAccountName: {{ .Values.greetifyValidator.serviceAccount.name }}
+      containers:
+        - name: {{ .Values.greetifyValidator.name }}
+          image: {{ .Values.registry.name }}/{{ .Values.greetifyValidator.image.name }}:{{ .Values.greetifyValidator.image.tag }}
+          ports:
+            - containerPort: {{ .Values.greetifyValidator.service.port }}

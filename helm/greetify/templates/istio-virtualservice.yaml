@@ -1,0 +1,69 @@
+{{- if .Values.istioServiceMesh.enabled }}
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{ .Values.istioServiceMesh.virtualServiceName }}
+  namespace: {{ .Values.app.namespace }}
+spec:
+  hosts:
+  - {{ .Values.app.domain }}
+  gateways:
+  - {{ .Values.istioServiceMesh.gatewayIngressName }}
+  http:
+  # Direct access to v1 deployment
+  - match:
+    - uri:
+        prefix: /api/v1
+    rewrite:
+      uri: /api  # Removes the /v1 before forwarding
+    route:
+    - destination:
+        host: {{ .Values.greetifyBackend.service.name }}
+        port:
+          number: {{ .Values.greetifyBackend.service.port }}
+        subset: v1
+      weight: 100
+
+  # Direct access to v2 deployment
+  - match:
+    - uri:
+        prefix: /api/v2
+    rewrite:
+      uri: /api  # Removes the /v2 before forwarding
+    route:
+    - destination:
+        host: {{ .Values.greetifyBackend.service.name }}
+        port:
+          number: {{ .Values.greetifyBackend.service.port }}
+        subset: v2
+      weight: 100
+
+  # Traffic splitting between deployments
+  - match:
+    - uri:
+        prefix: /api
+    route:
+    - destination:
+        host: {{ .Values.greetifyBackend.service.name }}
+        port:
+          number: {{ .Values.greetifyBackend.service.port }}
+        subset: v1
+      weight: 80
+    - destination:
+        host: {{ .Values.greetifyBackend.service.name }}
+        port:
+          number: {{ .Values.greetifyBackend.service.port }}
+        subset: v2
+      weight: 20
+
+  # Frontend service
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        host: {{ .Values.greetifyFrontend.service.name }}
+        port:
+          number: {{ .Values.greetifyFrontend.service.port }}
+      weight: 100
+{{- end }}

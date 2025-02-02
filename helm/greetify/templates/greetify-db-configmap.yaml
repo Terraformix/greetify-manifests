@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.greetifyDbConfigMap.name }}
+  namespace: {{ .Values.app.namespace }}
+  labels:
+    app: {{ .Values.app.name }}
+data:
+  ACCEPT_EULA: {{ .Values.greetifyDbConfigMap.data.ACCEPT_EULA | quote }}

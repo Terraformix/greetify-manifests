@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.greetifyFrontend.service.name }}
+  namespace: {{ .Values.app.namespace }}
+  labels:
+    app: {{ .Values.app.name }}
+    type: {{ .Values.greetifyFrontend.labels.type }}
+spec:
+  type: {{ .Values.greetifyFrontend.service.type }}
+  ports:
+    - port: {{ .Values.greetifyFrontend.service.port }} 
+      targetPort: {{ .Values.greetifyFrontend.service.targetPort }}
+      protocol: {{ .Values.greetifyFrontend.service.protocol }}
+  selector:
+    app: {{ .Values.app.name }}
+    type: {{ .Values.greetifyFrontend.labels.type }}

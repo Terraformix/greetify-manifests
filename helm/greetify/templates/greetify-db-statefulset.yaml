@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Values.greetifyDb.name }}
+  namespace: {{ .Values.app.namespace }}
+  labels:
+    app: {{ .Values.app.name }}
+    type: {{ .Values.greetifyDb.labels.type }}
+spec:
+  serviceName: {{ .Values.greetifyDb.service.name }}  # References the headless service
+  replicas: {{ .Values.greetifyDb.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.app.name }}
+      type: {{ .Values.greetifyDb.labels.type }}
+  template:
+    metadata:
+      name: {{ .Values.greetifyDb.name }}
+      labels:
+        app: {{ .Values.app.name }}
+        type: {{ .Values.greetifyDb.labels.type }}
+    spec:
+      serviceAccountName: {{ .Values.greetifyDb.serviceAccount.name }}
+      # Init Container to set permissions before running the main SQL Server container
+      initContainers:
+      - name: greetify-db-permissions
+        image: busybox
+        command: ["sh", "-c", "chown -R 10001:0 /var/opt/mssql"]
+        volumeMounts:
+          - mountPath: {{ .Values.greetifyDb.volumeMounts.greetifyDbVolume.mountPath }}
+            name: {{ .Values.greetifyDb.volumeMounts.greetifyDbVolume.name }}
+      containers:
+      - name: {{ .Values.greetifyDb.name }}
+        image: {{ .Values.greetifyDb.image.name }}:{{ .Values.greetifyDb.image.tag }}
+        ports:
+        - containerPort: {{ .Values.greetifyDb.service.port }}
+        envFrom:
+          - configMapRef:
+              name: {{ .Values.greetifyDbConfigMap.name }}
+        env:
+          - name: SA_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.greetifyDbSecret.name }}
+                key: SA_PASSWORD
+          - name: DB_USER
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.greetifyDbSecret.name }}
+                key: DB_USER
+        volumeMounts:
+        - name: {{ .Values.greetifyDb.volumeMounts.greetifyDbVolume.name }}
+          mountPath: {{ .Values.greetifyDb.volumeMounts.greetifyDbVolume.mountPath }}
+  # Template for creating a PVC for each pod in the StatefulSet
+  volumeClaimTemplates:
+  - metadata:
+      name: {{ .Values.greetifyDb.volumeMounts.greetifyDbVolume.name }} # Name of the PVC to be created for each Pod
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: {{ .Values.greetifyDb.persistentVolumeClaims.greetifyDbPvc.capacity }}
+      storageClassName: {{ .Values.storageClass.name }}

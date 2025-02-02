@@ -1,0 +1,43 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: greetify-argo
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/Terraformix/greetify-manifests.git
+    targetRevision: HEAD
+    path: helm/greetify # Track changes only in this directory
+
+  # Cluster where ArgoCD will apply the changes in the Git repository
+  destination: 
+    server: https://kubernetes.default.svc
+    namespace: greetify
+
+  syncPolicy:
+    syncOptions:
+    - CreateNamespace=true
+
+    automated:
+      selfHeal: true # Makes sure manual changes made to live cluster are undone and synced back with the Git repository
+      prune: true # If a single manifest is renamed or deleted, then delete that resource in the Cluster and recreate it
+---
+# For Private Repositories
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+  name: argocd-private-repo
+  namespace: argocd
+  annotations:
+    managed-by: argocd.argoproj.io
+  labels:
+    argocd.argoproj.io/secret-type: repository
+stringData:
+  type: git
+  url: https://github.com/Terraformix/greetify-manifests.git
+  # Github credentials
+  username: <username>
+  password: <password>

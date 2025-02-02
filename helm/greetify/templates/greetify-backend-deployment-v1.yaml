@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.greetifyBackend.name }}-v1
+  namespace: {{ .Values.app.namespace }}
+  labels:
+    app: {{ .Values.app.name }}
+    type: {{ .Values.greetifyBackend.labels.type }}
+    version: {{ .Values.greetifyBackend.version | quote }}
+spec:
+  replicas: {{ .Values.greetifyBackend.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.app.name }}
+      type: {{ .Values.greetifyBackend.labels.type }}
+      version: {{ .Values.greetifyBackend.version | quote }}
+  template:
+    metadata:
+      name: {{ .Values.greetifyBackend.name }}
+      labels:
+        app: {{ .Values.app.name }}
+        type: {{ .Values.greetifyBackend.labels.type }}
+        version: {{ .Values.greetifyBackend.version | quote }}
+    spec:
+      serviceAccountName: {{ .Values.greetifyBackend.serviceAccount.name }}
+      containers:
+        - name: {{ .Values.greetifyBackend.name }}
+          image: {{ .Values.registry.name }}/{{ .Values.greetifyBackend.image.name }}:{{ .Values.greetifyBackend.image.tag }}
+          ports:
+            - containerPort: {{ .Values.greetifyBackend.service.port }}
+              name: {{ .Values.greetifyBackend.service.portName }}  # Used by Prometheus CRD (PodMonitor) to scrape custom metrics exposed by Node.js
+          envFrom:
+            - configMapRef:
+                name: {{ .Values.greetifyBackendConfigMap.name }}
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.greetifyBackendSecret.name }}
+                  key: DB_PASSWORD
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.greetifyBackendSecret.name }}
+                  key: DB_USER
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.greetifyBackendSecret.name }}
+                  key: DB_HOST
+            - name: GREETIFY_VALIDATOR_URL
+              value: http://{{ .Values.greetifyValidator.service.name }}:{{ .Values.greetifyValidator.service.port }}
+            - name: APP_VERSION
+              value: v1
+          # Readiness Probe to check if the DB is ready
+          readinessProbe:
+            httpGet:
+              path: /health  # API endpoint that checks connectivity to DB
+              port: {{ .Values.greetifyBackend.service.port }}
+            initialDelaySeconds: 10  # Delay before starting checks
+            periodSeconds: 10        # Interval between each probe
+            failureThreshold: 5      # Fail after 5 unsuccessful probes
+            successThreshold: 1      # Consider it ready after 1 successful probe
+          # Liveness Probe to check if the DB is still available
+          livenessProbe:
+            httpGet:
+              path: /health  # API endpoint that checks connectivity to DB
+              port: {{ .Values.greetifyBackend.service.port }}
+            initialDelaySeconds: 10  # Delay before starting checks
+            periodSeconds: 20        # Interval between each probe
+            failureThreshold: 3      # Fail after 3 unsuccessful probes
+            successThreshold: 1      # Consider it healthy after 1 successful probe

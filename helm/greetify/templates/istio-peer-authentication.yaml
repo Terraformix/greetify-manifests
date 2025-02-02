@@ -1,0 +1,11 @@
+{{- if .Values.istioServiceMesh.enabled }}
+
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: strict-mtls
+  namespace: {{ .Values.app.namespace }}
+spec:
+  mtls:
+    mode: STRICT
+{{- end}}

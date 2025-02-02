@@ -1,0 +1,146 @@
+registry:
+  name: Terraformix
+
+greetifyBackend:
+  name: greetify-backend
+  replicas: 1
+  version: v1
+  image:
+    name: greetify-backend
+    tag: 1
+  service:
+    name: greetify-backend
+    type: ClusterIP
+    port: 8080
+    portName: greetify
+    targetPort: 8080 # Port application is running on inside the container
+    protocol: TCP
+  labels:
+    type: backend
+  serviceAccount:
+    name: greetify-backend
+  roles:
+    name: greetify-backend
+
+greetifyBackendSecret:
+  name: greetify-backend-secret
+
+greetifyBackendConfigMap:
+  name: greetify-backend-configmap
+
+greetifyValidator:
+  name: greetify-validator
+  replicas: 1
+  version: v1
+  image:
+    name: greetify-validator
+    tag: 1
+  service:
+    name: greetify-validator
+    type: ClusterIP
+    port: 5194
+    targetPort: 5194
+    protocol: TCP
+  labels:
+    type: validator
+  serviceAccount:
+    name: greetify-validator
+  roles:
+    name: greetify-validator
+
+greetifyFrontend:
+  name: greetify-frontend
+  replicas: 1
+  version: v1
+  image:
+    name: greetify-frontend
+    tag: 10
+  service:
+    name: greetify-frontend
+    type: ClusterIP
+    port: 80
+    targetPort: 80
+    protocol: TCP
+  labels:
+    type: frontend
+  serviceAccount:
+    name: greetify-frontend
+  roles:
+    name: greetify-frontend
+
+greetifyDb:
+  name: greetify-db
+  replicas: 1
+  image:
+    name: mcr.microsoft.com/mssql/server
+    tag: 2019-latest
+  service:
+    name: greetify-db
+    type: ClusterIP
+    port: 1433
+    targetPort: 1433
+    protocol: TCP
+  labels:
+    type: db
+  volumeMounts:
+    greetifyDbVolume:
+      name: greetify-db-volume
+      mountPath: /var/opt/mssql
+  persistentVolumes:
+    greetifyDbPv:
+      name: greetify-db-pv
+      reclaimPolicy: Retain
+      hostPath: /mnt/data/greetify-db
+      capacity: 5Gi
+  persistentVolumeClaims:
+    greetifyDbPvc:
+      name: greetify-db-pvc
+      capacity: 5Gi
+  serviceAccount:
+    name: greetify-db
+  roles:
+    name: greetify-db
+
+storageClass:
+  name: hostpath
+
+greetifyDbSecret:
+  name: greetify-db-secret
+  data:
+    DB_USER: c2E= #sa
+    SA_PASSWORD: cEBzc3cwcmQxMjM0NQ== # p@ssw0rd12345
+    DB_HOST: Z3JlZXRpZnktZGI= # greetify-db
+
+greetifyDbConfigMap:
+  name: greetify-db-configmap
+  data:
+    ACCEPT_EULA: Y
+    DB_USER: sa
+    SA_PASSWORD: p@ssw0rd12345
+
+ingress:
+  name: greetify-ingress
+  ingressClassName: nginx
+
+app:
+  name: greetify
+  domain: greetify.site
+  namespace: greetify
+
+letsencryptClusterIssuer:
+  clusterIssuerName: letsencrypt
+  email: <email>
+  secretName:  greetify-tls
+  privateKeySecretName: letsencrypt-key
+
+istioServiceMesh:
+  enabled: false
+  gatewayIngressName: greetify-ingress-gateway
+  virtualServiceName: greetify-virtual-service
+  backendDestinationRule: greetify-backend-destination-rule
+
+certManager:
+  enabled: false
+
+createNamespace: false
+createNetworkPolicies: false

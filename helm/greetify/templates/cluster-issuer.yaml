@@ -1,0 +1,17 @@
+# Prevent issuing the Certificates each time to avoid hitting limits by LetsEncrypt
+{{- if .Values.certManager.enabled }}
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: {{ .Values.letsencryptClusterIssuer.clusterIssuerName }}
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: {{ .Values.letsencryptClusterIssuer.email }}
+    privateKeySecretRef:
+      name: {{ .Values.letsencryptClusterIssuer.privateKeySecretName }}
+    solvers:
+      - http01:
+          ingress:
+            class: {{ .Values.ingress.ingressClassName }}
+{{- end }}

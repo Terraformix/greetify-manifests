@@ -1,0 +1,21 @@
+{{- if .Values.istioServiceMesh.enabled }}
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: {{ .Values.istioServiceMesh.backendDestinationRule }}
+  namespace: {{ .Values.app.namespace }}
+spec:
+  host: {{ .Values.greetifyBackend.service.name }}
+  subsets:
+  - name: v1
+    labels:
+      app: {{ .Values.app.name }}
+      type: {{ .Values.greetifyBackend.labels.type }}
+      version: {{ .Values.greetifyBackend.version | quote }}
+  - name: v2
+    labels:
+      app: {{ .Values.app.name }}
+      type: {{ .Values.greetifyBackend.labels.type }}
+      version: v2
+{{- end }}
+

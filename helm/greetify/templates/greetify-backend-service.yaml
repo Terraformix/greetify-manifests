@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.greetifyBackend.service.name }}
+  namespace: {{ .Values.app.namespace }}
+  labels:
+    app: {{ .Values.app.name }}
+    type: {{ .Values.greetifyBackend.labels.type }}
+    monitoring: enabled
+spec:
+  type: {{ .Values.greetifyBackend.service.type }}
+  ports:
+  - port: {{ .Values.greetifyBackend.service.port }}
+    name: {{ .Values.greetifyBackend.service.portName }} # Used by prometheus CRD (ServiceMonitor) to scrape custom metrics exposed by Node.js
+    targetPort: {{ .Values.greetifyBackend.service.targetPort }}
+    protocol: {{ .Values.greetifyBackend.service.protocol }}
+  selector:
+    app: {{ .Values.app.name }}
+    type: {{ .Values.greetifyBackend.labels.type }}
