@@ -11,15 +11,6 @@ else
   echo "✅ jq is already installed!"
 fi
 
-# Check for the correct number of arguments
-if [ "$#" -lt 1 ]; then
-  echo "⚠️ Usage: $0 <ENVIRONMENT>"
-  echo "Example: $0 aks or $0 k3s"
-  exit 1
-fi
-
-ENV=$1
-
 HELM_RELEASE_NAME="greetify"
 PASSING_SCORE=3
 
@@ -30,7 +21,7 @@ GREETIFY_FRONTEND_DEPLOYMENT="greetify-frontend-deployment.yaml"
 
 files_to_scan=("$GREETIFY_BACKEND_DEPLOYMENT" "$GREETIFY_DB_STATEFULSET" "$GREETIFY_VALIDATOR_DEPLOYMENT" "$GREETIFY_FRONTEND_DEPLOYMENT")
 
-echo "🌍 Performing Kubesec scan - Static security analysis for Kubernetes manifests in $ENV"
+echo "🌍 Performing Kubesec scan - Static security analysis for Kubernetes manifests"
 echo "📄 Number of files to scan: ${#files_to_scan[@]}"
 echo "**************************************************"
 
